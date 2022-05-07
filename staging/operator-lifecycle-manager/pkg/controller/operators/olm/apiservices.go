@@ -303,6 +303,7 @@ func (a *Operator) getWebhookCABundle(csv *v1alpha1.ClusterServiceVersion, desc 
 		}
 	}
 
+	log.Errorf("unable to find CA for webhook %s of CSV %s", desc.GenerateName, csv.Spec.DisplayName)
 	return nil, fmt.Errorf("unable to find CA")
 }
 
@@ -356,12 +357,14 @@ func (a *Operator) updateDeploymentSpecsWithAPIServiceData(csv *v1alpha1.Cluster
 	for _, desc := range csv.Spec.WebhookDefinitions {
 		caBundle, err := a.getWebhookCABundle(csv, &desc)
 		if err != nil {
+			log.Errorf("could not retrieve caBundle for WebhookDescription %s: %v", desc.GenerateName, err)
 			return nil, fmt.Errorf("could not retrieve caBundle for WebhookDescription %s: %v", desc.GenerateName, err)
 		}
 		caHash := certs.PEMSHA256(caBundle)
 
 		depSpec, ok := depSpecs[desc.DeploymentName]
 		if !ok {
+			log.Errorf("strategyDetailsDeployment is missing deployment %s for WebhookDescription %s", desc.DeploymentName, desc.GenerateName)
 			return nil, fmt.Errorf("strategyDetailsDeployment is missing deployment %s for WebhookDescription %s", desc.DeploymentName, desc.GenerateName)
 		}
 
@@ -372,6 +375,7 @@ func (a *Operator) updateDeploymentSpecsWithAPIServiceData(csv *v1alpha1.Cluster
 		// Update deployment with secret volume mount.
 		secret, err := a.lister.CoreV1().SecretLister().Secrets(csv.GetNamespace()).Get(install.SecretName(install.ServiceName(desc.DeploymentName)))
 		if err != nil {
+			log.Errorf("unable to get secret %s", install.SecretName(install.ServiceName(desc.DeploymentName)))
 			return nil, fmt.Errorf("unable to get secret %s", install.SecretName(install.ServiceName(desc.DeploymentName)))
 		}
 		install.AddDefaultCertVolumeAndVolumeMounts(&depSpec, secret.GetName())
