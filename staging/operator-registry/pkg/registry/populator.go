@@ -8,12 +8,15 @@ import (
 	"sort"
 
 	"github.com/blang/semver/v4"
+	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/operator-framework/operator-registry/pkg/image"
 	libsemver "github.com/operator-framework/operator-registry/pkg/lib/semver"
 )
+
+var Logger *logrus.Entry
 
 type Dependencies struct {
 	RawMessage []map[string]interface{} `json:"dependencies" yaml:"dependencies"`
@@ -140,14 +143,14 @@ func (i *DirectoryPopulator) loadManifests(imagesToAdd []*ImageInput, mode Mode)
 	if err := i.globalSanityCheck(imagesToAdd); err != nil {
 		return err
 	}
-	fmt.Printf("++++++++++++++imagesToAdd: %v", imagesToAdd)
+	Logger.Debugf("++++++++++++++imagesToAdd: %v", imagesToAdd)
 
 	if len(i.overwrittenImages) > 0 {
-		fmt.Printf("++++++++++++++i.overwrittenImages: %v", i.overwrittenImages)
+		Logger.Debugf("++++++++++++++i.overwrittenImages: %v", i.overwrittenImages)
 		if overwriter, ok := i.loader.(HeadOverwriter); ok {
 			// Assume loader has some way to handle overwritten heads if HeadOverwriter isn't implemented explicitly
 			for pkg, imgToDelete := range i.overwrittenImages {
-				fmt.Printf("+++++++++++imgToDelete: %v", imgToDelete)
+				Logger.Debugf("+++++++++++imgToDelete: %v", imgToDelete)
 				if len(imgToDelete) == 0 {
 					continue
 				}
