@@ -18,7 +18,7 @@ RUN mkdir -p .git/objects
 COPY . .
 RUN make build/olm bin/cpb
 
-FROM registry.ci.openshift.org/ocp/4.15:base
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 ADD manifests/ /manifests
 LABEL io.openshift.release.operator=true
