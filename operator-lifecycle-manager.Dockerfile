@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
+FROM docker.io/library/golang:1.21 AS builder
 
 ENV GO111MODULE auto
 ENV GOPATH /go
@@ -18,7 +18,7 @@ RUN mkdir -p .git/objects
 COPY . .
 RUN make build/olm bin/cpb
 
-FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 ADD manifests/ /manifests
 LABEL io.openshift.release.operator=true
