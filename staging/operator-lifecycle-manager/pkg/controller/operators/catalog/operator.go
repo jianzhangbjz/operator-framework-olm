@@ -1291,6 +1291,7 @@ func (o *Operator) syncResolvingNamespace(obj interface{}) error {
 
 		// ensure the installplan reference is correct
 		sub, changedIP, err := o.ensureSubscriptionInstallPlanState(logger, sub, failForwardEnabled)
+		logger.Infof("changedIP: %v", changedIP)
 		if err != nil {
 			logger.Infof("error ensuring installplan state: %v", err)
 			return err
@@ -1299,12 +1300,14 @@ func (o *Operator) syncResolvingNamespace(obj interface{}) error {
 
 		// record the current state of the desired corresponding CSV in the status. no-op if we don't know the csv yet.
 		sub, changedCSV, err := o.ensureSubscriptionCSVState(logger, sub, failForwardEnabled)
+		logger.Infof("changedCSV: %v", changedCSV)
 		if err != nil {
 			logger.Infof("error recording current state of CSV in status: %v", err)
 			return err
 		}
 
 		subscriptionUpdated = subscriptionUpdated || changedCSV
+		logger.Infof("subscriptionUpdated: %v", subscriptionUpdated)
 		subs[i] = sub
 	}
 	if subscriptionUpdated {
@@ -1581,6 +1584,7 @@ func (o *Operator) ensureSubscriptionInstallPlanState(logger *logrus.Entry, sub 
 }
 
 func (o *Operator) ensureSubscriptionCSVState(logger *logrus.Entry, sub *v1alpha1.Subscription, failForwardEnabled bool) (*v1alpha1.Subscription, bool, error) {
+	logger.Infof("failForwardEnabled: %v", failForwardEnabled)
 	if sub.Status.CurrentCSV == "" {
 		return sub, false, nil
 	}
@@ -1603,12 +1607,15 @@ func (o *Operator) ensureSubscriptionCSVState(logger *logrus.Entry, sub *v1alpha
 		out.Status.InstalledCSV = sub.Status.CurrentCSV
 	}
 
+	logger.Infof("out.Status.State: %v", out.Status.State)
+	logger.Infof("sub.Status.State: %v", sub.Status.State)
+
 	if sub.Status.State == out.Status.State {
 		// The subscription status represents the cluster state
 		return sub, false, nil
 	}
 	out.Status.LastUpdated = o.now()
-
+	logger.Infof("out.Status: %v", out.Status)
 	// Update Subscription with status of transition. Log errors if we can't write them to the status.
 	updatedSub, err := o.client.OperatorsV1alpha1().Subscriptions(out.GetNamespace()).UpdateStatus(context.TODO(), out, metav1.UpdateOptions{})
 	if err != nil {
