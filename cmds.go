@@ -1,3 +1,6 @@
+//go:build cmds
+// +build cmds
+
 package cmds
 
 import (
